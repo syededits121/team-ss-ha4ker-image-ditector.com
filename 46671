@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMAGE DETAIL EXTRACTOR</title>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bungee+Outline&display=swap');
+
+        /* Keyframes for animations */
+        @keyframes border-animation {
+            0% { border-color: #ff007f; }
+            25% { border-color: #ff6e0e; }
+            50% { border-color: #0dff72; }
+            75% { border-color: #0e8bff; }
+            100% { border-color: #ff007f; }
+        }
+
+        @keyframes text-color-animation {
+            0% { color: #ff007f; }
+            25% { color: #ff6e0e; }
+            50% { color: #0dff72; }
+            75% { color: #0e8bff; }
+            100% { color: #ff007f; }
+        }
+
+        /* Keyframes for bubble animation */
+        @keyframes bubbles {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+                border-radius: 0;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+                opacity: 0;
+                border-radius: 50%;
+            }
+        }
+
+        body {
+            font-family: 'Bungee Outline', cursive;
+            margin: 0;
+            padding: 0;
+            background-color: #0d1117;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bubbles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .bubbles li {
+            position: absolute;
+            display: block;
+            list-style: none;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            animation: bubbles 25s linear infinite;
+            bottom: -150px;
+        }
+
+        .bubbles li:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-delay: 0s; background-color: rgba(255, 0, 127, 0.5); }
+        .bubbles li:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; animation-duration: 12s; background-color: rgba(255, 110, 14, 0.5); }
+        .bubbles li:nth-child(3) { left: 70%; width: 20px; height: 20px; animation-delay: 4s; background-color: rgba(13, 255, 114, 0.5); }
+        .bubbles li:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; animation-duration: 18s; background-color: rgba(14, 139, 255, 0.5); }
+        .bubbles li:nth-child(5) { left: 65%; width: 20px; height: 20px; animation-delay: 0s; background-color: rgba(255, 0, 127, 0.5); }
+        .bubbles li:nth-child(6) { left: 75%; width: 110px; height: 110px; animation-delay: 3s; background-color: rgba(255, 110, 14, 0.5); }
+        .bubbles li:nth-child(7) { left: 35%; width: 150px; height: 150px; animation-delay: 7s; background-color: rgba(13, 255, 114, 0.5); }
+        .bubbles li:nth-child(8) { left: 50%; width: 25px; height: 25px; animation-delay: 15s; animation-duration: 45s; background-color: rgba(14, 139, 255, 0.5); }
+        .bubbles li:nth-child(9) { left: 20%; width: 15px; height: 15px; animation-delay: 2s; animation-duration: 35s; background-color: rgba(255, 0, 127, 0.5); }
+        .bubbles li:nth-child(10) { left: 85%; width: 150px; height: 150px; animation-delay: 0s; animation-duration: 11s; background-color: rgba(255, 110, 14, 0.5); }
+
+        .container {
+            width: 90%;
+            max-width: 400px;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+            margin-top: 50px;
+            border: 2px solid;
+            animation: border-animation 5s infinite;
+        }
+
+        .header {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+            letter-spacing: 2px;
+            font-family: 'Roboto', sans-serif;
+            margin-bottom: 10px;
+            animation: text-color-animation 5s infinite;
+        }
+
+        .card {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .file-input-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .upload-text {
+            color: #e0e0e0;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+        }
+
+        .custom-file-upload {
+            border: 1px solid #ffffff;
+            display: inline-block;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            background-color: #21262d;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        #file-name {
+            color: #d0d0d0;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .whatsapp-button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            background-color: #25d366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .whatsapp-button:hover {
+            background-color: #128c7e;
+        }
+
+        .details-box {
+            background-color: rgba(0, 0, 0, 0.6);
+            min-height: 200px;
+            border-radius: 10px;
+            border: 2px solid;
+            animation: border-animation 5s infinite;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .details-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            font-family: 'Roboto', sans-serif;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+            letter-spacing: 2px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            background: -webkit-linear-gradient(#f3ec78, #af4298);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+    <ul class="bubbles">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+
+    <div class="container">
+        <div class="header">
+            IMAGE DETAIL EXTRACTOR
+        </div>
+        <div class="card">
+            <div class="file-input-container">
+                <p class="upload-text">UPLODE IMAGE</p>
+                <p class="upload-text">SCREENSHOT NO SUPPORTED</p>
+                <label for="file-input" class="custom-file-upload">
+                    Choose File
+                </label>
+                <input type="file" id="file-input" accept="image/*">
+                <span id="file-name">No file chosen</span>
+            </div>
+            <a href="https://whatsapp.com/channel/0029VbB4WST7oQhhTx9Z0u2O" target="_blank" class="whatsapp-button">
+                Join My WhatsApp Channel
+            </a>
+        </div>
+    </div>
+
+    <div class="details-header">
+        DETAILS !
+    </div>
+    <div class="container details-box" id="details-output">
+        Image details will appear here after you upload a file.
+    </div>
+
+    <div class="footer">
+        TEAM SS HACKER
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const fileNameSpan = document.getElementById('file-name');
+        const detailsOutput = document.getElementById('details-output');
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) {
+                fileNameSpan.textContent = 'No file chosen';
+                detailsOutput.textContent = 'Image details will appear here after you upload a file.';
+                return;
+            }
+
+            fileNameSpan.textContent = file.name;
+            detailsOutput.textContent = 'Fetching details...';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+
+                img.onload = function() {
+                    let details = `
+File Name: ${file.name}
+File Size: ${(file.size / 1024).toFixed(2)} KB
+File Type: ${file.type}
+Image Dimensions: ${img.width} x ${img.height} pixels
+`;
+
+                    EXIF.getData(img, async function() {
+                        const allTags = EXIF.getAllTags(this);
+
+                        // Mobile Name
+                        const mobileMake = allTags.Make || 'Not Found';
+                        const mobileModel = allTags.Model || 'Not Found';
+                        details += `\nMobile Name: ${mobileMake} ${mobileModel}`;
+
+                        // GPS (Location)
+                        const gpsLatitude = allTags.GPSLatitude;
+                        const gpsLongitude = allTags.GPSLongitude;
+                        if (gpsLatitude && gpsLongitude) {
+                            const lat = convertGPSToDecimal(gpsLatitude, allTags.GPSLatitudeRef);
+                            const lon = convertGPSToDecimal(gpsLongitude, allTags.GPSLongitudeRef);
+                            details += `\nLocation (GPS): Latitude ${lat}, Longitude ${lon}`;
+
+                            // Get Country Name from GPS
+                            const countryName = await getCountryFromGPS(lat, lon);
+                            details += `\nCountry: ${countryName}`;
+                        } else {
+                            details += `\nLocation (GPS): Not Found`;
+                            details += `\nCountry: Not Found`;
+                        }
+
+                        // Battery (Still not available in standard image data)
+                        details += `\nBattery Level: Not Found (Not available in standard image data)`;
+
+                        detailsOutput.textContent = details;
+                    });
+                };
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Helper function to convert GPS data to decimal format
+        function convertGPSToDecimal(gps, ref) {
+            const degrees = gps[0] || 0;
+            const minutes = gps[1] || 0;
+            const seconds = gps[2] || 0;
+            let decimal = degrees + (minutes / 60) + (seconds / 3600);
+            if (ref === 'S' || ref === 'W') {
+                decimal *= -1;
+            }
+            return decimal.toFixed(6);
+        }
+
+        // Async function to get country name from GPS coordinates using an API
+        async function getCountryFromGPS(lat, lon) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'ImageDetailExtractor/1.0'
+                    }
+                });
+                const data = await response.json();
+                if (data && data.address && data.address.country) {
+                    return data.address.country;
+                } else {
+                    return 'Not Found';
+                }
+            } catch (error) {
+                console.error('Error fetching location:', error);
+                return 'Not Found';
+            }
+        }
+    </script>
+
+</body>
+</html>
